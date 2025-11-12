@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader } from "lucide-react"
+import { Loader, AlertCircle } from "lucide-react"
 
 interface Booking {
   _id: string
@@ -86,11 +86,17 @@ export default function PaymentPage() {
       })
 
       if (!intentResponse.ok) {
-        setError("Failed to create payment")
+        const errorData = await intentResponse.json()
+        setError(errorData.error || "Failed to create payment")
         return
       }
 
-      const { clientSecret } = await intentResponse.json()
+      const { clientSecret, paymentIntentId } = await intentResponse.json()
+
+      if (!clientSecret || !paymentIntentId) {
+        setError("Invalid payment response from server")
+        return
+      }
 
       // In a real implementation, you would use Stripe.js to confirm payment
       // For now, we'll confirm the payment on the backend
@@ -101,7 +107,7 @@ export default function PaymentPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          paymentIntentId: clientSecret,
+          paymentIntentId: paymentIntentId,
           bookingId,
         }),
       })
@@ -109,10 +115,11 @@ export default function PaymentPage() {
       if (confirmResponse.ok) {
         router.push(`/my-bookings?success=true`)
       } else {
-        setError("Payment confirmation failed")
+        const errorData = await confirmResponse.json()
+        setError(errorData.error || "Payment confirmation failed")
       }
     } catch (err) {
-      setError("Payment processing failed")
+      setError("Payment processing failed. Please try again.")
       console.error(err)
     } finally {
       setProcessing(false)
@@ -157,7 +164,12 @@ export default function PaymentPage() {
             <CardDescription>Secure payment via Stripe</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {error && <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">{error}</div>}
+            {error && (
+              <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm flex gap-2">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <div className="p-4 bg-muted rounded-lg">
               <div className="flex justify-between text-sm mb-2">
@@ -168,8 +180,11 @@ export default function PaymentPage() {
 
             <div className="space-y-3 text-sm p-3 bg-blue-50 rounded-md border border-blue-200">
               <p className="text-blue-900 font-medium">Test Mode - Demo Payment</p>
-              <p className="text-blue-800">Card: 4242 4242 4242 4242</p>
-              <p className="text-blue-800">Exp: 12/25 | CVC: 123</p>
+              <div className="space-y-1 text-blue-800">
+                <p>Use this test card:</p>
+                <p className="font-mono font-semibold">4242 4242 4242 4242</p>
+                <p>Exp: 12/25 | CVC: 123</p>
+              </div>
             </div>
 
             <Button onClick={handlePayment} disabled={processing} className="w-full" size="lg">

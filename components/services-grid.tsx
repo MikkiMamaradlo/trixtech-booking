@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Clock, DollarSign } from "lucide-react"
+import { Clock, DollarSign, AlertCircle } from "lucide-react"
 
 interface Service {
   _id: string
@@ -22,6 +22,15 @@ export default function ServicesGrid({ services }: ServicesGridProps) {
 
   const handleBookService = (serviceId: string) => {
     router.push(`/booking/${serviceId}`)
+  }
+
+  if (!services || services.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">No services available at the moment</p>
+      </div>
+    )
   }
 
   const groupedByCategory = services.reduce(
@@ -55,7 +64,7 @@ export default function ServicesGrid({ services }: ServicesGridProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <DollarSign size={16} className="text-primary" />
-                      <span className="font-semibold">${service.price}</span>
+                      <span className="font-semibold">${service.price.toFixed(2)}</span>
                     </div>
                   </div>
                   <Button onClick={() => handleBookService(service._id)} className="w-full">

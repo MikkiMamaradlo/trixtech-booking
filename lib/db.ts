@@ -18,6 +18,8 @@ export async function connectToDatabase() {
     await client.connect()
     const db = client.db(process.env.MONGODB_DB_NAME || "trixtech")
 
+    await db.admin().ping()
+
     cachedClient = client
     cachedDb = db
 

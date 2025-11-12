@@ -14,10 +14,28 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const validateForm = (): boolean => {
+    if (!formData.email || !formData.password) {
+      setError("Email and password are required")
+      return false
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address")
+      return false
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    if (!validateForm()) {
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -33,9 +51,14 @@ export default function LoginPage() {
         return
       }
 
+      if (!data.token || !data.user) {
+        setError("Invalid response from server")
+        return
+      }
+
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
-      router.push("/dashboard")
+      router.push(data.user.role === "admin" ? "/admin" : "/dashboard")
     } catch (err) {
       setError("An error occurred. Please try again.")
       console.error(err)
@@ -67,6 +90,7 @@ export default function LoginPage() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -82,6 +106,7 @@ export default function LoginPage() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 required
+                disabled={loading}
               />
             </div>
 

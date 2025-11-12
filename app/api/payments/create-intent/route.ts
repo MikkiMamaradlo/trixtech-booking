@@ -13,12 +13,20 @@ export const POST = withAuth(async (req: AuthenticatedRequest) => {
       return NextResponse.json({ error: "Booking ID is required" }, { status: 400 })
     }
 
+    if (!ObjectId.isValid(bookingId)) {
+      return NextResponse.json({ error: "Invalid booking ID format" }, { status: 400 })
+    }
+
     const db = await getDatabase()
 
     const booking = await db.collection("bookings").findOne({ _id: new ObjectId(bookingId), userId: req.user!.userId })
 
     if (!booking) {
-      return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+      return NextResponse.json({ error: "Booking not found or unauthorized" }, { status: 404 })
+    }
+
+    if (!booking.totalPrice || booking.totalPrice <= 0) {
+      return NextResponse.json({ error: "Invalid booking price" }, { status: 400 })
     }
 
     // Create Stripe payment intent

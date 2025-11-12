@@ -14,6 +14,11 @@ export function withAuth(handler: (req: AuthenticatedRequest) => Promise<NextRes
       }
 
       const token = authHeader.substring(7)
+
+      if (!token || token.trim() === "") {
+        return NextResponse.json({ error: "Token cannot be empty" }, { status: 401 })
+      }
+
       const payload = verifyToken(token)
 
       if (!payload) {

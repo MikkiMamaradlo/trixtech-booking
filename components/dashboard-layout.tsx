@@ -16,8 +16,14 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children, user, onLogout }: DashboardLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  const handleEscapeKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && mobileMenuOpen) {
+      setMobileMenuOpen(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" onKeyDown={handleEscapeKey}>
       {/* Header */}
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -44,7 +50,7 @@ export default function DashboardLayout({ children, user, onLogout }: DashboardL
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -52,13 +58,25 @@ export default function DashboardLayout({ children, user, onLogout }: DashboardL
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border p-4 space-y-2">
-            <Link href="/dashboard" className="block text-sm hover:text-primary py-2">
+            <Link
+              href="/dashboard"
+              className="block text-sm hover:text-primary py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Services
             </Link>
-            <Link href="/my-bookings" className="block text-sm hover:text-primary py-2">
+            <Link
+              href="/my-bookings"
+              className="block text-sm hover:text-primary py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               My Bookings
             </Link>
-            <Link href="/profile" className="block text-sm hover:text-primary py-2">
+            <Link
+              href="/profile"
+              className="block text-sm hover:text-primary py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Profile
             </Link>
             <Button variant="outline" size="sm" className="w-full bg-transparent" onClick={onLogout}>

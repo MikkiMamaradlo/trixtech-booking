@@ -28,8 +28,14 @@ export default function AdminLayout({ children, user, onLogout }: AdminLayoutPro
 
   const isActive = (href: string) => pathname === href
 
+  const handleEscapeKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape" && mobileMenuOpen) {
+      setMobileMenuOpen(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" onKeyDown={handleEscapeKey}>
       {/* Header */}
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -62,7 +68,7 @@ export default function AdminLayout({ children, user, onLogout }: AdminLayoutPro
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
