@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import ServicesGrid from "@/components/services-grid"
 import { Card, CardContent } from "@/components/ui/card"
+import { servicesAPI } from "@/lib/api"
 
 interface Service {
   _id: string
@@ -39,15 +40,8 @@ export default function DashboardPage() {
 
   const fetchServices = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/services?limit=20", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setServices(data.services)
-      }
+      const data = await servicesAPI.getAll()
+      setServices(data)
     } catch (error) {
       console.error("Failed to fetch services:", error)
     } finally {

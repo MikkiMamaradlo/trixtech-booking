@@ -7,56 +7,69 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { authAPI } from "@/lib/api"
 
 export default function RegisterPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    firstName: "",
-    lastName: "",
     phone: "",
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  const validateForm = (): boolean => {
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError("All fields are required")
+      return false
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address")
+      return false
+    }
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return false
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      return false
+    }
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+    if (!validateForm()) {
       setLoading(false)
       return
     }
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-        }),
+      const data = await authAPI.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || "Registration failed")
+      if (!data.token || !data.user) {
+        setError("Invalid response from server")
         return
       }
 
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
       router.push("/dashboard")
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+    } catch (err: any) {
+      setError(err.message || "Registration failed")
       console.error(err)
     } finally {
       setLoading(false)
@@ -74,35 +87,20 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">{error}</div>}
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2">
-                <label htmlFor="firstName" className="text-sm font-medium">
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  type="text"
-                  placeholder="John"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="lastName" className="text-sm font-medium">
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  type="text"
-                  placeholder="Doe"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                required
+                disabled={loading}
+              />
             </div>
 
             <div className="space-y-2">
@@ -117,12 +115,13 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 required
+                disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="phone" className="text-sm font-medium">
-                Phone
+                Phone (Optional)
               </label>
               <input
                 id="phone"
@@ -131,6 +130,7 @@ export default function RegisterPage() {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                disabled={loading}
               />
             </div>
 
@@ -146,6 +146,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -161,6 +162,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 required
+                disabled={loading}
               />
             </div>
 

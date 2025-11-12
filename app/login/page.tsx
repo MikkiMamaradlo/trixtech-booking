@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { authAPI } from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -38,18 +39,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || "Login failed")
-        return
-      }
+      const data = await authAPI.login(formData)
 
       if (!data.token || !data.user) {
         setError("Invalid response from server")
@@ -59,8 +49,8 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
       router.push(data.user.role === "admin" ? "/admin" : "/dashboard")
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+    } catch (err: any) {
+      setError(err.message || "Login failed")
       console.error(err)
     } finally {
       setLoading(false)
